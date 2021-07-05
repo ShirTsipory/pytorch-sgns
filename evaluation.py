@@ -6,9 +6,7 @@ import pandas as pd
 import argparse
 from tqdm import tqdm
 import pathlib
-
 from scipy.stats import ttest_ind
-
 from train_utils import UserBatchIncrementDataset
 
 
@@ -22,34 +20,13 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=2000, help="batch size to iterate with when predicting")
     parser.add_argument('--hr_out', type=str, default='./output/hr_out.csv', help="hit at K for each test row")
     parser.add_argument('--mrr_out', type=str, default='./output/mrr_out.csv', help="hit at K for each test row")
+    parser.add_argument('--mpr_out', type=str, default='./output/mpr_out.csv', help="percentile for each test row")
     return parser.parse_args()
 
 
-# def mrr_k(model, test_path, k, out_file, pad_idx, batch_size, window_size):
-#     test_dataset = UserBatchIncrementDataset(test_path, pad_idx, window_size)
-#     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=16)
-#     pbar = tqdm(test_loader)
-#
-#     rec_rank = 0
-#     for batch_titems, batch_citems in pbar:
-#         all_titems = t.tensor(np.repeat(np.array([range(model.ai2v.tvectors.weight.size()[0])]), batch_size, axis=0))
-#         if next(model.parameters()).is_cuda:
-#             batch_citems, batch_titems = batch_citems.cuda(), batch_titems.cuda()
-#             all_titems = all_titems.cuda()
-#         mask_pad_ids = (batch_citems == pad_idx)
-#         batch_sub_users = model.ai2v(all_titems, batch_citems, mask_pad_ids)
-#         all_tvecs = model.ai2v.Bt(model.ai2v.forward_t(all_titems))
-#         sim = model.similarity(batch_sub_users, all_tvecs, all_titems).squeeze()
-#         items_ranked = t.argsort(sim, descending=True)[:, :k]
-#         rec_rank += 1 / (items_ranked.eq(batch_titems.view(-1, 1)).nonzero()[:, 1] + 1)
-#
-#     return rec_rank / len(pbar)
-
 def mrr_k(model, eval_set, k, out_file):
     rec_rank = 0
-
     pbar = tqdm(eval_set)
-
     with open(out_file, 'w') as file:
         for i, (user_itemids, target_item) in enumerate(pbar):
             items_ranked = model.inference(user_itemids).argsort()
@@ -64,26 +41,6 @@ def mrr_k(model, eval_set, k, out_file):
     mrp_k = rec_rank / len(eval_set)
     return mrp_k
 
-
-# def hr_k(model, test_path, k, out_file, pad_idx, batch_size, window_size):
-#     test_dataset = UserBatchIncrementDataset(test_path, pad_idx, window_size)
-#     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=16)
-#     pbar = tqdm(test_loader)
-#
-#     in_top_k = 0
-#     for batch_titems, batch_citems in pbar:
-#         all_titems = t.tensor(np.repeat(np.array([range(model.ai2v.tvectors.weight.size()[0])]), batch_size, axis=0))
-#         if next(model.parameters()).is_cuda:
-#             batch_citems, batch_titems = batch_citems.cuda(), batch_titems.cuda()
-#             all_titems = all_titems.cuda()
-#         mask_pad_ids = (batch_citems == pad_idx)
-#         batch_sub_users = model.ai2v(all_titems, batch_citems, mask_pad_ids)
-#         all_tvecs = model.ai2v.Bt(model.ai2v.forward_t(all_titems))
-#         sim = model.similarity(batch_sub_users, all_tvecs, all_titems).squeeze()
-#         items_ranked = t.argsort(sim, descending=True)[:, :k]
-#         in_top_k += items_ranked.eq(batch_titems.view(-1, 1)).sum()
-#
-#     return in_top_k / len(pbar)
 
 def hr_k(model, eval_set, k, out_file):
     pbar = tqdm(eval_set)
@@ -100,6 +57,24 @@ def hr_k(model, eval_set, k, out_file):
                 file.write(f'{str(i)}, {target_item}, 0')
                 file.write('\n')
     return in_top_k / len(eval_set)
+
+
+def mpr(model, eval_set, out_file):
+    rec_percent = 0
+    pbar = tqdm(eval_set)
+    with open(out_file, 'w') as file:
+        for i, (user_itemids, target_item) in enumerate(pbar):
+            items_ranked = model.inference(user_itemids).argsort()
+            items = items_ranked[:][::-1]
+            if target_item in items:
+                rec_percent += (float(np.where(items == target_item)[0][0]) / len(items))
+                file.write(f'{str(i)}, {target_item}, {rec_percent}')
+                file.write('\n')
+            else:
+                file.write(f'{str(i)}, {target_item}, 0')
+                file.write('\n')
+    mpr = rec_percent / float(len(eval_set))
+    return mpr
 
 
 def test_p_value(ai2v_file, i2v_file):
@@ -125,7 +100,49 @@ def main():
     # print(f'mrr at {args.k}:', mrr_k(model.module, pathlib.Path(args.data_dir, args.test), args.k, args.mrr_out,
     #                                  item2idx['pad'], args.batch_size, args.window_size))
     print(f'mrr at {args.k}:', mrr_k(model.module, eval_set, args.k, args.mrr_out))
+    print(f'mpr:', mpr(model.module, eval_set, args.mpr_out))
 
 
 if __name__ == '__main__':
     main()
+
+
+# def hr_k(model, test_path, k, out_file, pad_idx, batch_size, window_size):
+#     test_dataset = UserBatchIncrementDataset(test_path, pad_idx, window_size)
+#     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=16)
+#     pbar = tqdm(test_loader)
+#
+#     in_top_k = 0
+#     for batch_titems, batch_citems in pbar:
+#         all_titems = t.tensor(np.repeat(np.array([range(model.ai2v.tvectors.weight.size()[0])]), batch_size, axis=0))
+#         if next(model.parameters()).is_cuda:
+#             batch_citems, batch_titems = batch_citems.cuda(), batch_titems.cuda()
+#             all_titems = all_titems.cuda()
+#         mask_pad_ids = (batch_citems == pad_idx)
+#         batch_sub_users = model.ai2v(all_titems, batch_citems, mask_pad_ids)
+#         all_tvecs = model.ai2v.Bt(model.ai2v.forward_t(all_titems))
+#         sim = model.similarity(batch_sub_users, all_tvecs, all_titems).squeeze()
+#         items_ranked = t.argsort(sim, descending=True)[:, :k]
+#         in_top_k += items_ranked.eq(batch_titems.view(-1, 1)).sum()
+#
+#     return in_top_k / len(pbar)
+
+# def mrr_k(model, test_path, k, out_file, pad_idx, batch_size, window_size):
+#     test_dataset = UserBatchIncrementDataset(test_path, pad_idx, window_size)
+#     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=16)
+#     pbar = tqdm(test_loader)
+#
+#     rec_rank = 0
+#     for batch_titems, batch_citems in pbar:
+#         all_titems = t.tensor(np.repeat(np.array([range(model.ai2v.tvectors.weight.size()[0])]), batch_size, axis=0))
+#         if next(model.parameters()).is_cuda:
+#             batch_citems, batch_titems = batch_citems.cuda(), batch_titems.cuda()
+#             all_titems = all_titems.cuda()
+#         mask_pad_ids = (batch_citems == pad_idx)
+#         batch_sub_users = model.ai2v(all_titems, batch_citems, mask_pad_ids)
+#         all_tvecs = model.ai2v.Bt(model.ai2v.forward_t(all_titems))
+#         sim = model.similarity(batch_sub_users, all_tvecs, all_titems).squeeze()
+#         items_ranked = t.argsort(sim, descending=True)[:, :k]
+#         rec_rank += 1 / (items_ranked.eq(batch_titems.view(-1, 1)).nonzero()[:, 1] + 1)
+#
+#     return rec_rank / len(pbar)
