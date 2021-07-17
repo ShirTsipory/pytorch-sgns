@@ -38,10 +38,11 @@ def create_moviesdat_corpus():  # https://www.kaggle.com/rounakbanik/the-movies-
                     if count < 1:
                         count += 1
                     elif count >= 1:
+                        line = line.split(',')
                         user = line[0]
                         cus_id = line[1]
                         rating = line[2]
-                        date = line[3]
+                        date = line[3][:-1]
                         writer.writerow([user, cus_id, rating, date])
 
 
@@ -49,7 +50,7 @@ def create_yahoo_corpus():  # https://webscope.sandbox.yahoo.com/catalog.php?dat
     # We create a random timestamp.
     file_out = './data/yahoo_corpus.csv'  # The file of the output, the ready corpus
     data_dir = './archive/yahoo'  # The directory of the files.
-    last_user = '0'
+    start_date = datetime.date(2000, 1, 1)
     with codecs.open(file_out, mode='w') as w_file:
         writer = csv.writer(w_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         for file in os.listdir(data_dir):
@@ -63,18 +64,10 @@ def create_yahoo_corpus():  # https://webscope.sandbox.yahoo.com/catalog.php?dat
                         line = line[0].split('\t')
                         cus_id = line[0]
                         rating = line[1]
-                        if last_user != user:
-                            last_user = user
-                            start_date = datetime.date(2000, 1, 1)
-                            random_number_of_days = randrange(10000)
-                            random_date = str(start_date + datetime.timedelta(days=random_number_of_days))
-                            date = time.mktime(datetime.datetime.strptime(random_date, "%Y-%m-%d").timetuple())
-                            writer.writerow([user, cus_id, rating, date])
-                        else:
-                            random_number_of_days = randrange(10000)
-                            random_date = str(start_date + datetime.timedelta(days=random_number_of_days))
-                            date = time.mktime(datetime.datetime.strptime(random_date, "%Y-%m-%d").timetuple())
-                            writer.writerow([user, cus_id, rating, date])
+                        random_number_of_days = randrange(10000)
+                        random_date = str(start_date + datetime.timedelta(days=random_number_of_days))
+                        date = time.mktime(datetime.datetime.strptime(random_date, "%Y-%m-%d").timetuple())
+                        writer.writerow([user, cus_id, rating, int(date)])
 
 
 def create_goodbooks_corpus():  # https://www.kaggle.com/zygmunt/goodbooks-10k
@@ -92,19 +85,18 @@ def create_goodbooks_corpus():  # https://www.kaggle.com/zygmunt/goodbooks-10k
                     if count < 1:
                         count += 1
                     elif count >= 1:
+                        line = line.split(',')
                         user = line[1]
                         cus_id = line[0]
-                        rating = line[2]
+                        rating = line[2][:-1]
                         if last_cus != cus_id:
                             last_cus = cus_id
                             start_date = datetime.date(2000, 1, 1)
-                            date_time = str(start_date)
-                            date = time.mktime(datetime.datetime.strptime(date_time, "%Y-%m-%d").timetuple())
-                            writer.writerow([user, cus_id, rating, date])
+                            date_time = start_date
                         else:
-                            date_time = str(start_date + datetime.timedelta(days=1))
-                            date = time.mktime(datetime.datetime.strptime(date_time, "%Y-%m-%d").timetuple())
-                            writer.writerow([user, cus_id, rating, date])
+                            date_time = date_time + datetime.timedelta(days=1)
+                        date = time.mktime(datetime.datetime.strptime(str(date_time), "%Y-%m-%d").timetuple())
+                        writer.writerow([user, cus_id, rating, int(date)])
 
 
 def create_booksrec_corpus():  # https://www.kaggle.com/arashnic/book-recommendation-dataset
@@ -113,7 +105,7 @@ def create_booksrec_corpus():  # https://www.kaggle.com/arashnic/book-recommenda
     file_out = './data/booksrec_corpus.csv'  # The file of the output, the ready corpus
     data_dir = './archive/booksrec'  # The directory of the files.
     count = 0
-    last_user = '0'
+    start_date = datetime.date(2000, 1, 1)
     id_to_num = {}
     id_counter = 1
     with codecs.open(file_out, mode='w') as w_file:
@@ -125,24 +117,17 @@ def create_booksrec_corpus():  # https://www.kaggle.com/arashnic/book-recommenda
                     if count < 1:
                         count += 1
                     elif count >= 1:
+                        line = line.split(',')
                         user = line[0]
                         if line[1] not in id_to_num.keys():
                             id_to_num[line[1]] = id_counter
                             id_counter += 1
                         cus_id = id_to_num[line[1]]
-                        rating = line[2]
-                        if last_user != user:
-                            last_user = user
-                            start_date = datetime.date(2000, 1, 1)
-                            random_number_of_days = randrange(10000)
-                            random_date = str(start_date + datetime.timedelta(days=random_number_of_days))
-                            date = time.mktime(datetime.datetime.strptime(random_date, "%Y-%m-%d").timetuple())
-                            writer.writerow([user, cus_id, rating, date])
-                        else:
-                            random_number_of_days = randrange(10000)
-                            random_date = str(start_date + datetime.timedelta(days=random_number_of_days))
-                            date = time.mktime(datetime.datetime.strptime(random_date, "%Y-%m-%d").timetuple())
-                            writer.writerow([user, cus_id, rating, date])
+                        rating = line[2][:-1]
+                        random_number_of_days = randrange(10000)
+                        random_date = str(start_date + datetime.timedelta(days=random_number_of_days))
+                        date = time.mktime(datetime.datetime.strptime(random_date, "%Y-%m-%d").timetuple())
+                        writer.writerow([user, cus_id, rating, int(date)])
 
 
 def create_animerec_corpus():  # https://www.kaggle.com/CooperUnion/anime-recommendations-database
@@ -150,7 +135,7 @@ def create_animerec_corpus():  # https://www.kaggle.com/CooperUnion/anime-recomm
     file_out = './data/animerec_corpus.csv'  # The file of the output, the ready corpus
     data_dir = './archive/animerec'  # The directory of the files.
     count = 0
-    last_user = '0'
+    start_date = datetime.date(2000, 1, 1)
     with codecs.open(file_out, mode='w') as w_file:
         writer = csv.writer(w_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         for file in os.listdir(data_dir):
@@ -160,21 +145,14 @@ def create_animerec_corpus():  # https://www.kaggle.com/CooperUnion/anime-recomm
                     if count < 1:
                         count += 1
                     elif count >= 1:
+                        line = line.split(',')
                         user = line[0]
                         cus_id = line[1]
-                        rating = line[2]
-                        if last_user != user:
-                            last_user = user
-                            start_date = datetime.date(2000, 1, 1)
-                            random_number_of_days = randrange(10000)
-                            random_date = str(start_date + datetime.timedelta(days=random_number_of_days))
-                            date = time.mktime(datetime.datetime.strptime(random_date, "%Y-%m-%d").timetuple())
-                            writer.writerow([user, cus_id, rating, date])
-                        else:
-                            random_number_of_days = randrange(10000)
-                            random_date = str(start_date + datetime.timedelta(days=random_number_of_days))
-                            date = time.mktime(datetime.datetime.strptime(random_date, "%Y-%m-%d").timetuple())
-                            writer.writerow([user, cus_id, rating, date])
+                        rating = line[2][:-1]
+                        random_number_of_days = randrange(10000)
+                        random_date = str(start_date + datetime.timedelta(days=random_number_of_days))
+                        date = time.mktime(datetime.datetime.strptime(random_date, "%Y-%m-%d").timetuple())
+                        writer.writerow([user, cus_id, rating, int(date)])
 
 
 def create_animerec20_corpus():  # https://www.kaggle.com/hernan4444/anime-recommendation-database-2020
@@ -182,7 +160,7 @@ def create_animerec20_corpus():  # https://www.kaggle.com/hernan4444/anime-recom
     file_out = './data/animerec20_corpus.csv'  # The file of the output, the ready corpus
     data_dir = './archive/animerec20'  # The directory of the files.
     count = 0
-    last_user = '0'
+    start_date = datetime.date(2000, 1, 1)
     with codecs.open(file_out, mode='w') as w_file:
         writer = csv.writer(w_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         for file in os.listdir(data_dir):
@@ -192,30 +170,24 @@ def create_animerec20_corpus():  # https://www.kaggle.com/hernan4444/anime-recom
                     if count < 1:
                         count += 1
                     elif count >= 1:
+                        line = line.split(',')
                         user = line[0]
                         cus_id = line[1]
-                        rating = line[2]
-                        if last_user != user:
-                            last_user = user
-                            start_date = datetime.date(2000, 1, 1)
-                            random_number_of_days = randrange(10000)
-                            random_date = str(start_date + datetime.timedelta(days=random_number_of_days))
-                            date = time.mktime(datetime.datetime.strptime(random_date, "%Y-%m-%d").timetuple())
-                            writer.writerow([user, cus_id, rating, date])
-                        else:
-                            random_number_of_days = randrange(10000)
-                            random_date = str(start_date + datetime.timedelta(days=random_number_of_days))
-                            date = time.mktime(datetime.datetime.strptime(random_date, "%Y-%m-%d").timetuple())
-                            writer.writerow([user, cus_id, rating, date])
+                        rating = line[2][:-1]
+                        random_number_of_days = randrange(10000)
+                        random_date = str(start_date + datetime.timedelta(days=random_number_of_days))
+                        date = time.mktime(datetime.datetime.strptime(random_date, "%Y-%m-%d").timetuple())
+                        writer.writerow([user, cus_id, rating, int(date)])
+
 
 def main():
-    #create_netflix_corpus()
-    #create_moviesdat_corpus()
-    #create_yahoo_corpus()
-    #create_goodbooks_corpus()  ##############################################################
+    create_netflix_corpus()
+    create_moviesdat_corpus()
+    create_yahoo_corpus()
+    create_goodbooks_corpus()
     create_booksrec_corpus()
-    #create_animerec_corpus()
-    #create_animerec20_corpus()
+    create_animerec_corpus()
+    create_animerec20_corpus()
 
 
 if __name__ == '__main__':
