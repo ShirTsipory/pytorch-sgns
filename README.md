@@ -84,3 +84,9 @@ in the format of user_id,item_id, metric_values
 from evaluation import test_p_value
 test_p_value('./output/ht_ai2v.csv', './output/ht_i2v.csv')
 ```
+
+Changes:
+1.	An MPR function was added to the evaluation file. The higher the MPR value, the better.
+2.	Changing the 'create_netflix_corpus.py' to 'create_corpus.py', and adding to the file functions for the databases.
+3.	Adding a wrapper bash file to run all the code. In the file we will chose the database, it will be put as input for the prepare_ corpus.py file so the wanted data will be run.
+4.	In the preprocess.py file there are global txt file names. Those names are created by the prepare_ corpus.py file, so in order to run the model we have to run the prepare_ corpus.py and then the preprocess.py.
