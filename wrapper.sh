@@ -6,42 +6,42 @@ function prepare_database_corpus(){
   echo "preparing $1"
 
   # If to check what data base I want to run.
-  if $1 == "movielens"; then
-    python prepare_corpus.py --input_file ./data/movielens_corpus.csv --line_sep , --min_usr_len 2 --max_usr_len 1000 \
+  if [ "$1" = "movielens" ]; then
+    python prepare_corpus.py --input_file ./data/movielens_corpus.dat --line_sep , --min_usr_len 2 --max_usr_len 1000 \
     --min_items_cnt 5 --max_items_cnt 1000 --final_usr_len 2
   fi
 
-  if $1 == "netflix"; then
+  if [ "$1" = "netflix" ]; then
     python prepare_corpus.py --input_file ./data/netflix_corpus.csv --line_sep , --min_usr_len 3 --max_usr_len 2700 \
     --min_items_cnt 100 --max_items_cnt 130000 --final_usr_len 3
   fi
 
-  if $1 == "moviesdat"; then
+  if [ "$1" = "moviesdat" ]; then
     python prepare_corpus.py --input_file ./data/moviesdat_corpus.csv --line_sep , --min_usr_len 2 --max_usr_len 1000 \
     --min_items_cnt 5 --max_items_cnt 1000 --final_usr_len 2
   fi
 
-  if $1 == "yahoo"; then
+  if [ "$1" = "yahoo" ]; then
     python prepare_corpus.py --input_file ./data/yahoo_corpus.csv --line_sep , --min_usr_len 2 --max_usr_len 1000 \
     --min_items_cnt 5 --max_items_cnt 1000 --final_usr_len 2
   fi
 
-  if $1 == "goodbooks"; then
+  if [ "$1" = "goodbooks" ]; then
     python prepare_corpus.py --input_file ./data/goodbooks_corpus.csv --line_sep , --min_usr_len 2 --max_usr_len 1000 \
     --min_items_cnt 5 --max_items_cnt 1000 --final_usr_len 2
   fi
 
-  if $1 == "booksrec"; then
+  if [ "$1" = "booksrec" ]; then
     python prepare_corpus.py --input_file ./data/booksrec_corpus.csv --line_sep , --min_usr_len 2 --max_usr_len 1000 \
     --min_items_cnt 5 --max_items_cnt 1000 --final_usr_len 2
   fi
 
-  if $1 == "animerec"; then
+  if [ "$1" = "animerec" ]; then
     python prepare_corpus.py --input_file ./data/animerec_corpus.csv --line_sep , --min_usr_len 2 --max_usr_len 1000 \
     --min_items_cnt 5 --max_items_cnt 1000 --final_usr_len 2
   fi
 
-  if $1 == "animerec20"; then
+  if [ "$1" = "animerec20" ]; then
     python prepare_corpus.py --input_file ./data/animerec20_corpus.csv --line_sep , --min_usr_len 2 --max_usr_len 1000 \
     --min_items_cnt 5 --max_items_cnt 1000 --final_usr_len 2
   fi
